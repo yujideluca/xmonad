@@ -5,6 +5,10 @@ import Data.Monoid
 import System.Exit
 import XMonad.Actions.CycleWS --cycle through workspaces
 import XMonad.Util.SpawnOnce --spawnOnce command
+import XMonad.Util.Run --running protocols such as runInTerm or spawnPipe
+import XMonad.Hooks.ManageDocks --manages dock-type programs (gnome-panel, xmobar etc.)
+import XMonad.Hooks.ManageHelpers --manage screens
+import System.IO
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -55,18 +59,24 @@ myFocusedBorderColor = "#6ADEA1"
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     -- launch a terminal
-    [ ((modm, xK_Return), spawn $ XMonad.terminal conf)
+    [ ((modm,               xK_Return), spawn $ XMonad.terminal conf)
 
     -- launch dmenu
-    , ((modm,               xK_d     ), spawn "dmenu_run")
+    , ((modm,               xK_d     ), spawn  "dmenu_run")
 
-    -- launch gmrun
-    , ((modm .|. shiftMask, xK_p     ), spawn "gmrun")
+    --launch ranger
+    , ((modm .|. controlMask, xK_r   ), runInTerm "--title ranger" "ranger")
+
+    --launch firefox
+    , ((modm .|. controlMask, xK_f   ), spawn "firefox")
+
+    --launch nemo
+    , ((modm .|. controlMask, xK_n   ), spawn "nemo")
 
     -- close focused window
     , ((modm .|. shiftMask, xK_q     ), kill)
 
-     -- Rotate through the available layout algorithms
+    -- Rotate through the available layout algorithms
     , ((modm,               xK_space ), sendMessage NextLayout)
 
     --  Reset the layouts on the current workspace to default
@@ -79,64 +89,64 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm,               xK_Tab   ), windows W.focusDown)
 
     -- Move focus to the next windowr
-    , ((modm,               xK_Right     ), windows W.focusDown)
+    , ((modm,               xK_Right ), windows W.focusDown)
 
     -- Move focus to the previous window
-    , ((modm,               xK_Left      ), windows W.focusUp  )
+    , ((modm,               xK_Left  ), windows W.focusUp)
 
     -- Move focus to the master window
-    , ((modm .|. shiftMask, xK_m     ), windows W.focusMaster  )
+    , ((modm .|. shiftMask, xK_m     ), windows W.focusMaster)
 
     -- Swap the focused window and the master window
     --, ((modm  .|. shiftMask,   xK_Return), windows W.swapMaster)
 
     -- Swap the focused window with the next window
-    --, ((modm .|. shiftMask, xK_Right     ), windows W.swapDown )
+    , ((modm .|. shiftMask, xK_Right    ), windows W.swapDown)
 
     -- Swap the focused window with the previous window
-    --, ((modm .|. shiftMask, xK_Left      ), windows W.swapUp   )
+    , ((modm .|. shiftMask, xK_Left     ), windows W.swapUp)
 
     --moves to the next workspace
-    , ((mod1Mask,               xK_Right),  nextWS)
+    , ((mod1Mask,            xK_Right   ),  nextWS)
 
     --moves to the previous workspace
-    , ((mod1Mask,               xK_Left),    prevWS)
+    , ((mod1Mask,            xK_Left    ),    prevWS)
 
     --shifts to the next workspace
     , ((mod1Mask .|. shiftMask, xK_Right),  shiftToNext)
 
     --shifts to the previous workspace
-    , ((mod1Mask .|. shiftMask, xK_Left),    shiftToPrev)
+    , ((mod1Mask .|. shiftMask, xK_Left ),    shiftToPrev)
 
     -- Shrink the master area
     , ((modm,               xK_Down     ), sendMessage Shrink)
 
     -- Expand the master area
-    , ((modm,               xK_Up     ), sendMessage Expand)
+    , ((modm,               xK_Up       ), sendMessage Expand)
 
     -- Push window back into tiling
-    , ((modm .|. shiftMask, xK_space     ), withFocused $ windows . W.sink)
+    , ((modm .|. shiftMask, xK_space    ), withFocused $ windows . W.sink)
 
     -- Increment the number of windows in the master area
-    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
+    , ((modm              , xK_comma    ), sendMessage (IncMasterN 1))
 
     -- Deincrement the number of windows in the master area
-    , ((modm              , xK_period), sendMessage (IncMasterN (-1)))
+    , ((modm              , xK_period   ), sendMessage (IncMasterN (-1)))
 
     -- Toggle the status bar gap
     -- Use this binding with avoidStruts from Hooks.ManageDocks.
     -- See also the statusBar function from Hooks.DynamicLog.
     --
-    -- , ((modm              , xK_b     ), sendMessage ToggleStruts)
+    -- , ((modm            , xK_b       ), sendMessage ToggleStruts)
 
     -- Quit xmonad
-    , ((modm .|. shiftMask, xK_e     ), io (exitWith ExitSuccess))
+    , ((modm .|. shiftMask , xK_e       ), io (exitWith ExitSuccess))
 
     -- Restart xmonad
-    , ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile; xmonad --restart")
+    , ((modm              , xK_q        ), spawn "xmonad --recompile; xmonad --restart")
 
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
+    --, ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
     ]
     ++
 
@@ -188,7 +198,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = tiled ||| Mirror tiled ||| Full
+myLayout = avoidStruts (tiled ||| Full ||| Mirror tiled)
   where
     -- default tiling algorithm partitions the screen into two panes
     tiled   = Tall nmaster delta ratio
@@ -218,10 +228,11 @@ myLayout = tiled ||| Mirror tiled ||| Full
 -- 'className' and 'resource' are used below.
 --
 myManageHook = composeAll
-    [ className =? "MPlayer"        --> doFloat
+    [ isFullscreen                  --> doFullFloat 
+    , className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
-    , resource  =? "kdesktop"       --> doIgnore ]
+    , resource  =? "kdesktop"       --> doIgnore]
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -243,7 +254,7 @@ myEventHook = mempty
 myLogHook = do
     spawnOnce "compton &"
     spawnOnce "feh --bg-center ~/Downloads/walls/tux.png &"
-    spawnOnce "redshQift -O 3000"
+    spawnOnce "redshift -O 3000"
 
 
 ------------------------------------------------------------------------
@@ -261,7 +272,9 @@ myStartupHook = return ()
 
 -- Run xmonad with the settings you specify. No need to modify this.
 --
-main = xmonad defaults
+main = do
+    xmproc <- spawnPipe "xmobar -x 0 /home/yuji/.config/xmobar/xmobar.config"
+    xmonad $ docks defaults
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
