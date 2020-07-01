@@ -8,6 +8,9 @@ import XMonad.Util.SpawnOnce --spawnOnce command
 import XMonad.Util.Run --running protocols such as runInTerm or spawnPipe
 import XMonad.Hooks.ManageDocks --manages dock-type programs (gnome-panel, xmobar etc.)
 import XMonad.Hooks.ManageHelpers --manage screens
+import Graphics.X11.ExtraTypes.XF86
+import XMonad.Util.CustomKeys
+import XMonad.Util.EZConfig
 import System.IO
 
 import qualified XMonad.StackSet as W
@@ -73,6 +76,21 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     --launch nemo
     , ((modm .|. controlMask, xK_n   ), spawn "nemo")
 
+    --Raise volume
+    , ((0, xF86XK_AudioRaiseVolume   ), spawn "pactl set-sink-volume 0 +5%")
+
+    --Lower volume
+    , ((0, xF86XK_AudioLowerVolume   ), spawn "pactl set-sink-volume 0 -5%")
+
+    --Mute Volume
+    , ((0, xF86XK_AudioMute          ), spawn "pactl set-sink-mute 0 toggle")
+
+    --Raise brightness
+    , ((0, xF86XK_MonBrightnessUp   ), spawn "light -A 2")
+
+    --Lower brightness
+    , ((0, xF86XK_MonBrightnessDown   ), spawn "light -U 2")
+
     -- close focused window
     , ((modm .|. shiftMask, xK_q     ), kill)
 
@@ -137,13 +155,16 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Use this binding with avoidStruts from Hooks.ManageDocks.
     -- See also the statusBar function from Hooks.DynamicLog.
     --
-    -- , ((modm            , xK_b       ), sendMessage ToggleStruts)
+    ,((modm            , xK_t       ), sendMessage ToggleStruts)
 
     -- Quit xmonad
     , ((modm .|. shiftMask , xK_e       ), io (exitWith ExitSuccess))
 
+    --launch ranger
+    , ((modm .|. controlMask, xK_q   ), runInTerm "" "sudo systemctl start wpa_supplicant.service")
+
     -- Restart xmonad
-    , ((modm              , xK_q        ), spawn "xmonad --recompile; xmonad --restart")
+    , ((modm               , xK_q        ), spawn "xmonad --recompile; xmonad --restart")
 
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
     --, ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
@@ -228,7 +249,7 @@ myLayout = avoidStruts (tiled ||| Full ||| Mirror tiled)
 -- 'className' and 'resource' are used below.
 --
 myManageHook = composeAll
-    [ isFullscreen                  --> doFullFloat 
+    [ isFullscreen                  --> doFullFloat
     , className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
