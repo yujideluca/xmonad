@@ -1,3 +1,4 @@
+#********Must be on ~/.xmobar directory in order to work!!********
 # get-volume script returns the current volume status of your system in a
 # format suitable for use in xmobar. I found this script on this page:
 #   http://karuppuswamy.com/wordpress/2011/09/03/how-to-get-a-productive-desktop-based-on-xmonad-and-xmobar/
