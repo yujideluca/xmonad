@@ -8,7 +8,7 @@ import XMonad.Util.SpawnOnce --spawnOnce command
 import XMonad.Util.Run --running protocols such as runInTerm or spawnPipe
 import XMonad.Hooks.ManageDocks --manages dock-type programs (gnome-panel, xmobar etc.)
 import XMonad.Hooks.ManageHelpers --manage screens
-import Graphics.X11.ExtraTypes.XF86
+import Graphics.X11.ExtraTypes.XF86 --volume and brightness keys
 import XMonad.Util.CustomKeys
 import XMonad.Util.EZConfig
 import System.IO
@@ -53,8 +53,8 @@ myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
 
 -- Border colors for unfocused and focused windows, respectively.
 --
-myNormalBorderColor  = "#6A4DA1"
-myFocusedBorderColor = "#6ADEA1"
+myNormalBorderColor  = "#404B59"
+myFocusedBorderColor = "#7F6D89"
 
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
@@ -69,6 +69,9 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     --launch ranger
     , ((modm .|. controlMask, xK_r   ), runInTerm "--title ranger" "ranger")
+
+    --launch atom
+    , ((modm .|. controlMask, xK_a   ), spawn "atom")
 
     --launch firefox
     , ((modm .|. controlMask, xK_f   ), spawn "firefox")
@@ -86,10 +89,13 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((0, xF86XK_AudioMute          ), spawn "pactl set-sink-mute 0 toggle")
 
     --Raise brightness
-    , ((0, xF86XK_MonBrightnessUp   ), spawn "light -A 2")
+    , ((0, xF86XK_MonBrightnessUp    ), spawn "light -A 2")
 
     --Lower brightness
-    , ((0, xF86XK_MonBrightnessDown   ), spawn "light -U 2")
+    , ((0, xF86XK_MonBrightnessDown  ), spawn "light -U 2")
+
+    --Printscreen
+    , ((0, xK_Print                  ), spawn "scrot -q 1 ~/Pictures/prints/%Y-%m-%d-%H:%M:%S.png")
 
     -- close focused window
     , ((modm .|. shiftMask, xK_q     ), kill)
@@ -125,10 +131,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_Left     ), windows W.swapUp)
 
     --moves to the next workspace
-    , ((mod1Mask,            xK_Right   ),  nextWS)
+    , ((mod1Mask           , xK_Right   ),  nextWS)
 
     --moves to the previous workspace
-    , ((mod1Mask,            xK_Left    ),    prevWS)
+    , ((mod1Mask           , xK_Left    ),    prevWS)
 
     --shifts to the next workspace
     , ((mod1Mask .|. shiftMask, xK_Right),  shiftToNext)
@@ -137,10 +143,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((mod1Mask .|. shiftMask, xK_Left ),    shiftToPrev)
 
     -- Shrink the master area
-    , ((modm,               xK_Down     ), sendMessage Shrink)
+    , ((modm              , xK_Down     ), sendMessage Shrink)
 
     -- Expand the master area
-    , ((modm,               xK_Up       ), sendMessage Expand)
+    , ((modm              , xK_Up       ), sendMessage Expand)
 
     -- Push window back into tiling
     , ((modm .|. shiftMask, xK_space    ), withFocused $ windows . W.sink)
@@ -155,16 +161,16 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Use this binding with avoidStruts from Hooks.ManageDocks.
     -- See also the statusBar function from Hooks.DynamicLog.
     --
-    ,((modm            , xK_t       ), sendMessage ToggleStruts)
+    ,((modm               , xK_t        ), sendMessage ToggleStruts)
 
     -- Quit xmonad
-    , ((modm .|. shiftMask , xK_e       ), io (exitWith ExitSuccess))
+    , ((modm .|. shiftMask, xK_e        ), io (exitWith ExitSuccess))
 
     --launch ranger
-    , ((modm .|. controlMask, xK_q   ), runInTerm "" "sudo systemctl start wpa_supplicant.service")
+    , ((modm .|. controlMask, xK_q      ), runInTerm "" "sudo systemctl start wpa_supplicant.service")
 
     -- Restart xmonad
-    , ((modm               , xK_q        ), spawn "xmonad --recompile; xmonad --restart")
+    , ((modm              , xK_q        ), spawn "xmonad --recompile; xmonad --restart")
 
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
     --, ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
@@ -248,12 +254,13 @@ myLayout = avoidStruts (tiled ||| Full ||| Mirror tiled)
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
-myManageHook = composeAll
-    [ isFullscreen                  --> doFullFloat
-    , className =? "MPlayer"        --> doFloat
-    , className =? "Gimp"           --> doFloat
-    , resource  =? "desktop_window" --> doIgnore
-    , resource  =? "kdesktop"       --> doIgnore]
+myManageHook = composeOne [isFullscreen -?>  doFullFloat]
+
+    --composeAll
+    --[ className =? "MPlayer"        --> doFloat
+    --, className =? "Gimp"           --> doFloat
+    --, resource  =? "desktop_window" --> doIgnore
+    --, resource  =? "kdesktop"       --> doIgnore]
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -274,7 +281,7 @@ myEventHook = mempty
 --
 myLogHook = do
     spawnOnce "compton &"
-    spawnOnce "feh --bg-center ~/Downloads/walls/tux.png &"
+    spawnOnce "feh --bg-center ~/Pictures/walls/snow_forest.jpg &"
     spawnOnce "redshift -O 3000"
 
 
@@ -296,6 +303,8 @@ myStartupHook = return ()
 main = do
     xmproc <- spawnPipe "xmobar -x 0 /home/yuji/.config/xmobar/xmobar.config"
     xmonad $ docks defaults
+
+
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
