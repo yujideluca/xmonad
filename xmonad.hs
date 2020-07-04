@@ -88,7 +88,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. controlMask,    xK_n), spawn "nemo")
 
     --restart connection
-    , ((modm .|. controlMask,       xK_q), runInTerm "" "sudo systemctl start wpa_supplicant.service")
+    , ((modm .|. controlMask,    xK_q), runInTerm "" "sudo systemctl start wpa_supplicant.service")
 
     --launch ranger
     , ((modm .|. controlMask,    xK_r), runInTerm "--title ranger" "ranger")
@@ -117,10 +117,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
             {--WINDOW COMMANDS--}
     -- Move focus to the master window
-    , ((modm .|. shiftMask ,     xK_m), windows W.focusMaster)
+    , ((modm .|. shiftMask,      xK_m), windows W.focusMaster)
 
     -- Resize viewed windows to the correct size
-    --, ((modm              ,      xK_n), refresh)
+    --, ((modm,                    xK_n), refresh)
 
     -- close focused window
     , ((modm .|. shiftMask,      xK_q), kill)
@@ -128,31 +128,31 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Toggle the status bar gap
     -- Use this binding with avoidStruts from Hooks.ManageDocks.
     -- See also the statusBar function from Hooks.DynamicLog.
-    ,((modm                 ,       xK_t), sendMessage ToggleStruts)
+    ,((modm,                     xK_t), sendMessage ToggleStruts)
 
     -- Move focus to the next window
-    , ((modm              ,    xK_Tab), windows W.focusDown)
+    , ((modm,                  xK_Tab), windows W.focusDown)
 
     -- Move focus to the next windowr
-    , ((modm              ,  xK_Right), windows W.focusDown)
+    , ((modm,                xK_Right), windows W.focusDown)
 
     -- Move focus to the previous window
-    , ((modm              ,   xK_Left), windows W.focusUp)
+    , ((modm,                 xK_Left), windows W.focusUp)
 
     -- Swap the focused window and the master window
     , ((modm  .|. shiftMask,   xK_Return), windows W.swapMaster)
 
     -- Swap the focused window with the next window
-    , ((modm .|. shiftMask ,    xK_Right), windows W.swapDown)
+    , ((modm .|. shiftMask,     xK_Right), windows W.swapDown)
 
     -- Swap the focused window with the previous window
-    , ((modm .|. shiftMask ,     xK_Left), windows W.swapUp)
+    , ((modm .|. shiftMask,      xK_Left), windows W.swapUp)
 
     -- Shrink the master area (window space)
-    , ((modm              ,      xK_Down), sendMessage Shrink)
+    , ((modm,                    xK_Down), sendMessage Shrink)
 
     -- Expand the master area (window space)
-    , ((modm              ,        xK_Up), sendMessage Expand)
+    , ((modm,                      xK_Up), sendMessage Expand)
 
             {--WORKSPCE COMMANDS--}
 
@@ -160,37 +160,37 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask,  xK_space), setLayout $ XMonad.layoutHook conf)
 
     --moves to the next workspace
-    , ((mod1Mask           ,    xK_Right),  nextWS)
+    , ((mod1Mask,               xK_Right), nextWS)
 
     --moves to the previous workspace
-    , ((mod1Mask           ,     xK_Left),    prevWS)
+    , ((mod1Mask,                xK_Left), prevWS)
 
     --shifts to the next workspace
-    , ((mod1Mask .|. shiftMask, xK_Right),  shiftToNext)
+    , ((mod1Mask .|. shiftMask, xK_Right), shiftToNext)
 
     --shifts to the previous workspace
-    , ((mod1Mask .|. shiftMask,  xK_Left),    shiftToPrev)
+    , ((mod1Mask .|. shiftMask,  xK_Left), shiftToPrev)
 
             {--LAYOUT COMMANDS--}
 
     -- Rotate through the available layout algorithms
-    , ((modm              , xK_space ), sendMessage NextLayout)
+    , ((modm,               xK_space ), sendMessage NextLayout)
 
     -- Push window back into tiling
     , ((modm .|. shiftMask,     xK_space), withFocused $ windows . W.sink)
 
     -- Increment the number of windows in the master area
-    , ((modm              ,     xK_comma), sendMessage (IncMasterN 1))
+    , ((modm,                   xK_comma), sendMessage (IncMasterN 1))
 
     -- Deincrement the number of windows in the master area
-    , ((modm              ,    xK_period), sendMessage (IncMasterN (-1)))
+    , ((modm,                  xK_period), sendMessage (IncMasterN (-1)))
 
 
     -- Quit xmonad
-    , ((modm .|. shiftMask  ,       xK_e), io (exitWith ExitSuccess))
+    , ((modm .|. shiftMask,         xK_e), io (exitWith ExitSuccess))
 
     -- Restart xmonad
-    , ((modm                ,       xK_q), spawn "xmonad --recompile; xmonad --restart")
+    , ((modm,                       xK_q), spawn "xmonad --recompile; xmonad --restart")
 
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
     --, ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
@@ -321,35 +321,35 @@ main = do
     xmonad $ docks$ ewmh def
         {
           -- simple stuff
-            terminal            = myTerminal
-            ,focusFollowsMouse  = myFocusFollowsMouse
-            ,clickJustFocuses   = myClickJustFocuses
-            ,borderWidth        = myBorderWidth
-            ,modMask            = myModMask
-            ,workspaces         = myWorkspaces
-            ,normalBorderColor  = myNormalBorderColor
-            ,focusedBorderColor = myFocusedBorderColor
+            terminal             = myTerminal
+            , focusFollowsMouse  = myFocusFollowsMouse
+            , clickJustFocuses   = myClickJustFocuses
+            , borderWidth        = myBorderWidth
+            , modMask            = myModMask
+            , workspaces         = myWorkspaces
+            , normalBorderColor  = myNormalBorderColor
+            , focusedBorderColor = myFocusedBorderColor
 
-          -- key bindings
-            ,keys               = myKeys
-            ,mouseBindings      = myMouseBindings
+          --  key bindings
+            , keys               = myKeys
+            , mouseBindings      = myMouseBindings
 
-          -- hooks, layouts
-            ,layoutHook         = myLayout
+          --  hooks, layouts
+            , layoutHook         = myLayout
 
-            ,manageHook         = myManageHook <+> manageDocks
-            ,handleEventHook    = myEventHook
+            , manageHook         = myManageHook <+> manageDocks
+            , handleEventHook    = myEventHook
             , logHook = dynamicLogWithPP xmobarPP
                        { ppOutput          = \x -> hPutStrLn xmproc x
                        , ppCurrent         = xmobarColor "#AC9EC4" "" . wrap "[" "]" -- Current workspace in xmobar
                        , ppVisible         = xmobarColor "#BF99B9" ""                -- Visible but not current workspace
-                       , ppHidden          = xmobarColor "#AC9EC4" "" . wrap "*" ""   -- Hidden workspaces in xmobar
-                       , ppHiddenNoWindows = xmobarColor "#AC9EC4" ""        -- Hidden workspaces (no windows)
-                       , ppSep             =             "<fc=#AC9EC4> | </fc>"                     -- Separators in xmobar
-                       , ppUrgent          = xmobarColor "#BF99B9" "" . wrap "!" "!"  -- Urgent workspace
+                       , ppHidden          = xmobarColor "#AC9EC4" "" . wrap "'" ""  -- Hidden workspaces in xmobar
+                       , ppHiddenNoWindows = xmobarColor "#AC9EC4" ""                -- Hidden workspaces (no windows)
+                       , ppSep             =             "<fc=#AC9EC4> | </fc>"      -- Separators in xmobar
+                       , ppUrgent          = xmobarColor "#BF99B9" "" . wrap "!" "!" -- Urgent workspace
                        , ppOrder           = \(ws:_:t:_) -> [ws]
                        }
-            ,startupHook        = myStartupHook
+            , startupHook        = myStartupHook
         }
 
 
