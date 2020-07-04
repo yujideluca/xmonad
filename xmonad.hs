@@ -9,16 +9,24 @@ import qualified Data.Map        as M
             {--  ACTIONS  --}
 import XMonad.Actions.CycleWS --cycle through workspaces
             {--   HOOKS   --}
-import XMonad.Hooks.ManageDocks --manages dock-type programs (gnome-panel, xmobar etc.)
-import XMonad.Hooks.ManageHelpers --manage screens
+--import XMonad.Hooks.ManageDocks --manages dock-type programs (gnome-panel, xmobar etc.)
+--import XMonad.Hooks.ManageHelpers --manage screens
 --import XMonad.Hooks.DynamicLog --calls the internal states updates for status bars
+import XMonad.Hooks.DynamicLog (dynamicLogWithPP, wrap, xmobarPP, xmobarColor, shorten, PP(..))
+import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat)
+import XMonad.Hooks.ServerMode
+import XMonad.Hooks.SetWMName
+import XMonad.Layout.LayoutModifier
             {--   UTILS   --}
 import XMonad.Util.CustomKeys
 import XMonad.Util.EZConfig
 import XMonad.Util.Run --running protocols such as runInTerm or spawnPipe
 import XMonad.Util.SpawnOnce --spawnOnce command
+import XMonad.Util.NamedScratchpad ------
 
-
+{--VARIABLES--}
 -- The preferred terminal program, which is used in a binding below and by
 -- certain contrib modules.
 --
@@ -46,11 +54,20 @@ myModMask            = mod4Mask
 -- A tagging example:
 -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
 --
-myWorkspaces         = ["1","2","3","4","5","6","7","8","9"]
+xmobarEscape :: String -> String
+xmobarEscape = concatMap doubleLts
+  where
+        doubleLts '<' = "<<"
+        doubleLts x   = [x]
+myWorkspaces         = map xmobarEscape
+    $ ["1","2","3","4","5","6","7","8","9"]
 -- Border colors for unfocused and focused windows, respectively.
 --
 myNormalBorderColor  = "#404B59"
 myFocusedBorderColor = "#7F6D89"
+
+windowCount :: X (Maybe String)
+windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
 
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
@@ -226,7 +243,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = avoidStruts (tiled ||| Full ||| Mirror tiled)
+myLayout = avoidStruts(tiled ||| Full ||| Mirror tiled)
   where
     -- default tiling algorithm partitions the screen into two panes
     tiled   = Tall nmaster delta ratio
@@ -255,13 +272,12 @@ myLayout = avoidStruts (tiled ||| Full ||| Mirror tiled)
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
-myManageHook = composeOne [isFullscreen -?>  doFullFloat]
-
-    --composeAll
-    --[ className =? "MPlayer"        --> doFloat
-    --, className =? "Gimp"           --> doFloat
-    --, resource  =? "desktop_window" --> doIgnore
-    --, resource  =? "kdesktop"       --> doIgnore]
+myManageHook = composeAll
+    [ className =? "MPlayer"        --> doFloat
+    , className =? "Gimp"           --> doFloat
+    , resource  =? "desktop_window" --> doIgnore
+    , resource  =? "kdesktop"       --> doIgnore
+    , isFullscreen                  --> doFullFloat]
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -280,10 +296,6 @@ myEventHook = mempty
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
-myLogHook = do
-    spawnOnce "compton &"
-    spawnOnce "feh --bg-center ~/Pictures/walls/snow_forest.jpg &"
-    spawnOnce "redshift -O 3000"
 
 ------------------------------------------------------------------------
 -- Startup hook
@@ -293,7 +305,11 @@ myLogHook = do
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
-myStartupHook = return ()
+myStartupHook :: X ()
+myStartupHook = do
+    spawnOnce "compton &"
+    spawnOnce "feh --bg-center ~/Pictures/walls/snow_forest.jpg &"
+    spawnOnce "redshift -O 3000"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.
@@ -302,7 +318,39 @@ myStartupHook = return ()
 --
 main = do
     xmproc <- spawnPipe "xmobar -x 0 /home/yuji/.config/xmobar/xmobar.config"
-    xmonad $ docks defaults
+    xmonad $ docks$ ewmh def
+        {
+          -- simple stuff
+            terminal            = myTerminal
+            ,focusFollowsMouse  = myFocusFollowsMouse
+            ,clickJustFocuses   = myClickJustFocuses
+            ,borderWidth        = myBorderWidth
+            ,modMask            = myModMask
+            ,workspaces         = myWorkspaces
+            ,normalBorderColor  = myNormalBorderColor
+            ,focusedBorderColor = myFocusedBorderColor
+
+          -- key bindings
+            ,keys               = myKeys
+            ,mouseBindings      = myMouseBindings
+
+          -- hooks, layouts
+            ,layoutHook         = myLayout
+
+            ,manageHook         = myManageHook <+> manageDocks
+            ,handleEventHook    = myEventHook
+            , logHook = dynamicLogWithPP xmobarPP
+                       { ppOutput          = \x -> hPutStrLn xmproc x
+                       , ppCurrent         = xmobarColor "#AC9EC4" "" . wrap "[" "]" -- Current workspace in xmobar
+                       , ppVisible         = xmobarColor "#BF99B9" ""                -- Visible but not current workspace
+                       , ppHidden          = xmobarColor "#AC9EC4" "" . wrap "*" ""   -- Hidden workspaces in xmobar
+                       , ppHiddenNoWindows = xmobarColor "#AC9EC4" ""        -- Hidden workspaces (no windows)
+                       , ppSep             =             "<fc=#AC9EC4> | </fc>"                     -- Separators in xmobar
+                       , ppUrgent          = xmobarColor "#BF99B9" "" . wrap "!" "!"  -- Urgent workspace
+                       , ppOrder           = \(ws:_:t:_) -> [ws]
+                       }
+            ,startupHook        = myStartupHook
+        }
 
 
 
@@ -312,25 +360,26 @@ main = do
 --
 -- No need to modify this.
 --
-defaults = def {
-      -- simple stuff
-        terminal           = myTerminal,
-        focusFollowsMouse  = myFocusFollowsMouse,
-        clickJustFocuses   = myClickJustFocuses,
-        borderWidth        = myBorderWidth,
-        modMask            = myModMask,
-        workspaces         = myWorkspaces,
-        normalBorderColor  = myNormalBorderColor,
-        focusedBorderColor = myFocusedBorderColor,
-
-      -- key bindings
-        keys               = myKeys,
-        mouseBindings      = myMouseBindings,
-
-      -- hooks, layouts
-        layoutHook         = myLayout,
-        manageHook         = myManageHook,
-        handleEventHook    = myEventHook,
-        logHook            = myLogHook,
-        startupHook        = myStartupHook
-    }
+--defaults = def {
+--      -- simple stuff
+--        terminal           = myTerminal,
+--        focusFollowsMouse  = myFocusFollowsMouse,
+--        clickJustFocuses   = myClickJustFocuses,
+--        borderWidth        = myBorderWidth,
+--        modMask            = myModMask,
+--        workspaces         = myWorkspaces,
+--        normalBorderColor  = myNormalBorderColor,
+--        focusedBorderColor = myFocusedBorderColor,
+--
+--      -- key bindings
+--        keys               = myKeys,
+--        mouseBindings      = myMouseBindings,
+--
+--      -- hooks, layouts
+--        startupHook        = myStartupHook,
+--        layoutHook         = myLayout,
+--        manageHook         = myManageHook,
+--        handleEventHook    = myEventHook,
+--        logHook            = myLogHook,
+--        startupHook        = myStartupHook
+--    }
