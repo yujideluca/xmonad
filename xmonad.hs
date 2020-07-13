@@ -81,6 +81,9 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- launch dmenu
     , ((modm,                    xK_d), spawn  "dmenu_run")
 
+    --launch emacs (spacemacs)
+    ,((modm .|. controlMask ,    xK_e), spawn "emacs")
+
     --launch firefox
     , ((modm .|. controlMask,    xK_f), spawn "firefox")
 
@@ -137,7 +140,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm,                xK_Right), windows W.focusDown)
 
     -- Move focus to the previous window
-    , ((modm,                 xK_Left), windows W.focusUp)
+    , ((modm,                    xK_Left), windows W.focusUp)
 
     -- Swap the focused window and the master window
     , ((modm  .|. shiftMask,   xK_Return), windows W.swapMaster)
@@ -154,6 +157,24 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Expand the master area (window space)
     , ((modm,                      xK_Up), sendMessage Expand)
 
+     -- Move focus to the next windowr
+     , ((modm,                      xK_l), windows W.focusDown)
+
+     -- Move focus to the previous window
+     , ((modm,                      xK_h), windows W.focusUp)
+
+     -- Swap the focused window with the next window
+     , ((modm .|. shiftMask,        xK_l), windows W.swapDown)
+
+     -- Swap the focused window with the previous window
+     , ((modm .|. shiftMask,        xK_h), windows W.swapUp)
+
+     -- Shrink the master area (window space)
+     , ((modm,                      xK_j), sendMessage Shrink)
+
+     -- Expand the master area (window space)
+     , ((modm,                      xK_k), sendMessage Expand)
+    
             {--WORKSPCE COMMANDS--}
 
     --  Reset the layouts on the current workspace to default
@@ -171,6 +192,18 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     --shifts to the previous workspace
     , ((mod1Mask .|. shiftMask,  xK_Left), shiftToPrev)
 
+    --moves to the next workspace
+    , ((mod1Mask,               xK_l), nextWS)
+
+    --moves to the previous workspace
+    , ((mod1Mask,                xK_h), prevWS)
+
+    --shifts to the next workspace
+    , ((mod1Mask .|. shiftMask, xK_l), shiftToNext)
+
+    --shifts to the previous workspace
+    , ((mod1Mask .|. shiftMask,  xK_h), shiftToPrev)
+    
             {--LAYOUT COMMANDS--}
 
     -- Rotate through the available layout algorithms
@@ -192,8 +225,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Restart xmonad
     , ((modm,                       xK_q), spawn "xmonad --recompile; xmonad --restart")
 
-    -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    --, ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
     ]
     ++
     -- modm + workspace number commands
@@ -288,7 +319,7 @@ myManageHook = composeAll
 -- return (All True) if the default handler is to be run afterwards. To
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
-myEventHook = mempty
+myEventHook = ewmhDesktopsEventHook
 
 ------------------------------------------------------------------------
 -- Status bars and logging
@@ -318,7 +349,7 @@ myStartupHook = do
 --
 main = do
     xmproc <- spawnPipe "xmobar -x 0 /home/yuji/.config/xmobar/xmobar.config"
-    xmonad $ docks$ ewmh def
+    xmonad $ docks $ ewmh def
         {
           -- simple stuff
             terminal             = myTerminal
@@ -338,11 +369,11 @@ main = do
             , layoutHook         = myLayout
 
             , manageHook         = myManageHook <+> manageDocks
-            , handleEventHook    = myEventHook
+            , handleEventHook    = handleEventHook def <+> fullscreenEventHook
             , logHook = dynamicLogWithPP xmobarPP
                        { ppOutput          = \x -> hPutStrLn xmproc x
                        , ppCurrent         = xmobarColor "#AC9EC4" "" . wrap "[" "]" -- Current workspace in xmobar
-                       , ppVisible         = xmobarColor "#BF99B9" ""                -- Visible but not current workspace
+                       , ppVisible         = xmobarColor "#AC9EC4" ""                -- Visible but not current workspace
                        , ppHidden          = xmobarColor "#AC9EC4" "" . wrap "'" ""  -- Hidden workspaces in xmobar
                        , ppHiddenNoWindows = xmobarColor "#AC9EC4" ""                -- Hidden workspaces (no windows)
                        , ppSep             =             "<fc=#AC9EC4> | </fc>"      -- Separators in xmobar
@@ -351,35 +382,3 @@ main = do
                        }
             , startupHook        = myStartupHook
         }
-
-
-
--- A structure containing your configuration settings, overriding
--- fields in the default config. Any you don't override, will
--- use the defaults defined in xmonad/XMonad/Config.hs
---
--- No need to modify this.
---
---defaults = def {
---      -- simple stuff
---        terminal           = myTerminal,
---        focusFollowsMouse  = myFocusFollowsMouse,
---        clickJustFocuses   = myClickJustFocuses,
---        borderWidth        = myBorderWidth,
---        modMask            = myModMask,
---        workspaces         = myWorkspaces,
---        normalBorderColor  = myNormalBorderColor,
---        focusedBorderColor = myFocusedBorderColor,
---
---      -- key bindings
---        keys               = myKeys,
---        mouseBindings      = myMouseBindings,
---
---      -- hooks, layouts
---        startupHook        = myStartupHook,
---        layoutHook         = myLayout,
---        manageHook         = myManageHook,
---        handleEventHook    = myEventHook,
---        logHook            = myLogHook,
---        startupHook        = myStartupHook
---    }
