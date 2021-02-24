@@ -19,6 +19,7 @@ import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat)
 import XMonad.Hooks.ServerMode
 import XMonad.Hooks.SetWMName
 import XMonad.Layout.LayoutModifier
+import XMonad.Layout.ThreeColumns
             {--   UTILS   --}
 import XMonad.Util.CustomKeys
 import XMonad.Util.EZConfig
@@ -274,7 +275,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = avoidStruts(tiled ||| Full ||| Mirror tiled)
+myLayout = avoidStruts(tiled ||| Full ||| newLayout) 
   where
     -- default tiling algorithm partitions the screen into two panes
     tiled   = Tall nmaster delta ratio
@@ -287,6 +288,8 @@ myLayout = avoidStruts(tiled ||| Full ||| Mirror tiled)
 
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
+    --three columns layout
+    newLayout = ThreeCol 1 (3/100) (1/3)
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -339,7 +342,7 @@ myEventHook = ewmhDesktopsEventHook
 myStartupHook :: X ()
 myStartupHook = do
     spawnOnce "compton &"
-    spawnOnce "feh --bg-center ~/Pictures/walls/snow_forest.jpg &"
+    spawnOnce "feh --bg-center ~/Pictures/walls/wallpaper.jpg &"
     spawnOnce "redshift -O 3000"
 
 ------------------------------------------------------------------------
