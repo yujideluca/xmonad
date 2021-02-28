@@ -18,6 +18,9 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat)
 import XMonad.Hooks.ServerMode
 import XMonad.Hooks.SetWMName
+            {--  LAYOUT   --}            
+import XMonad.Layout.Gaps
+import XMonad.Layout.Spacing
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.ThreeColumns
             {--   UTILS   --}
@@ -76,14 +79,21 @@ windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
             {--PROGRAM COMMANDS--}
-    --launch atom
-    [((modm .|. controlMask ,    xK_a), spawn "atom")
-
+    
     -- launch dmenu
-    , ((modm,                    xK_d), spawn  "dmenu_run")
+    [((modm,                    xK_d), spawn  "dmenu_run")
 
-    --launch emacs (spacemacs)
-    ,((modm .|. controlMask ,    xK_e), spawn "emacs")
+    --launch rofi
+    ,((modm .|. controlMask ,    xK_d), spawn "rofi -show run")
+
+    --adjusting my ultrawide screen 
+    ,((modm .|. controlMask ,    xK_s), spawn "xrandr --output HDMI-1 --mode 2560x1080 --left-of eDP-1 && feh feh --bg-fill ~/Pictures/walls/wallpaper.jpg")
+    
+    --keyboard language asjustment for programming vs typing
+     
+    ,((modm .|. controlMask ,    xK_p), spawn "setxkbmap -model abnt2 -layout br -variant abnt2")
+    ,((modm .|. controlMask ,    xK_u), spawn "setxkbmap us")
+
 
     --launch firefox
     , ((modm .|. controlMask,    xK_f), spawn "firefox")
@@ -275,10 +285,27 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = avoidStruts(tiled ||| Full ||| newLayout) 
+myLayout = avoidStruts(lapLayout||| Full ||| ultraLayout) 
   where
+
+    lapSpacing = spacingRaw True             -- Only for >1 window
+                            -- The bottom edge seems to look narrower than it is
+                            --(Border top bottom right left)
+                            (Border 7 7 7 7) -- Size of screen edge gaps
+                            True             -- Enable screen edge gaps
+                            (Border 3 3 3 3) -- Size of window gaps
+                            True             -- Enable window gaps
+
+    ultraSpacing = spacingRaw True             -- Only for >1 window
+                            -- The bottom edge seems to look narrower than it is
+                            --(Border top bottom right left)
+                            (Border 14 14 14 14) -- Size of screen edge gaps
+                            True             -- Enable screen edge gaps
+                            (Border 5 5 5 5) -- Size of window gaps
+                            True             -- Enable window gaps
+
     -- default tiling algorithm partitions the screen into two panes
-    tiled   = Tall nmaster delta ratio
+    lapLayout   = lapSpacing $ Tall nmaster delta ratio
 
     -- The default number of windows in the master pane
     nmaster = 1
@@ -288,8 +315,10 @@ myLayout = avoidStruts(tiled ||| Full ||| newLayout)
 
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
+
+
     --three columns layout
-    newLayout = ThreeCol 1 (3/100) (1/3)
+    ultraLayout = ultraSpacing $ ThreeCol (1) (3/100) (1/3)
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -342,7 +371,7 @@ myEventHook = ewmhDesktopsEventHook
 myStartupHook :: X ()
 myStartupHook = do
     spawnOnce "compton &"
-    spawnOnce "feh --bg-center ~/Pictures/walls/wallpaper.jpg &"
+    spawnOnce "feh --bg-fill ~/Pictures/walls/wallpaper.jpg &"
     spawnOnce "redshift -O 3000"
 
 ------------------------------------------------------------------------
