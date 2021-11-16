@@ -80,19 +80,15 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
             {--PROGRAM COMMANDS--}
     
-    -- launch dmenu
-    [((modm,                    xK_d), spawn  "dmenu_run")
-
+    [ 
     --launch rofi
-    ,((modm .|. controlMask ,    xK_d), spawn "rofi -show run")
+    ((modm,                       xK_d), spawn "rofi -show run")
 
-    --adjusting my ultrawide screen 
-    ,((modm .|. controlMask ,    xK_s), spawn "xrandr --output HDMI-1 --mode 2560x1080 --left-of eDP-1 && feh feh --bg-fill ~/Pictures/walls/wallpaper.jpg")
     
     --keyboard language asjustment for programming vs typing
      
-    ,((modm .|. controlMask ,    xK_p), spawn "setxkbmap -model abnt2 -layout br -variant abnt2")
-    ,((modm .|. controlMask ,    xK_u), spawn "setxkbmap us")
+    , ((modm .|. controlMask ,    xK_p), spawn "setxkbmap -model abnt2 -layout br -variant abnt2")
+    , ((modm .|. controlMask ,    xK_u), spawn "setxkbmap us")
 
 
     --launch firefox
@@ -234,7 +230,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask,         xK_e), io (exitWith ExitSuccess))
 
     -- Restart xmonad
-    , ((modm,                       xK_q), spawn "xmonad --recompile; xmonad --restart")
+    , ((modm,                       xK_q), spawn "xmonad --recompile & xmonad --restart")
 
     ]
     ++
@@ -372,7 +368,7 @@ myStartupHook :: X ()
 myStartupHook = do
     spawnOnce "compton &"
     spawnOnce "feh --bg-fill ~/Pictures/walls/wallpaper.jpg &"
-    spawnOnce "redshift -O 3000"
+    spawnOnce "xrandr --output eDP-1 --brightness 0.7 & redshift -O 3000"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.
